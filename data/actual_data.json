@@ -1,0 +1,24 @@
+{
+  "title": "SafeRoute actual input data",
+  "status": "actual-source-data",
+  "files": [
+    {
+      "file": "roads.graphml",
+      "purpose": "Bengaluru walkable road network used for routing",
+      "source_type": "supplied GraphML dataset"
+    },
+    {
+      "file": "streetlights.csv",
+      "purpose": "Streetlight latitude and longitude records",
+      "source_type": "supplied CSV dataset",
+      "columns": ["pole_id", "ward", "latitude", "longitude", "page"]
+    },
+    {
+      "file": "crime_districts.csv",
+      "purpose": "District-level IPC, SLL, and total case counts",
+      "source_type": "user-supplied CSV dataset",
+      "columns": ["Districts", "IPC Cases", "SLL Cases", "Total"]
+    }
+  ],
+  "important_boundary": "The crime totals are actual supplied records, but they are not Bengaluru street-level coordinates."
+}

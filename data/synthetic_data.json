@@ -1,0 +1,26 @@
+{
+  "title": "SafeRoute synthetic and prototype data",
+  "status": "synthetic-demo-data",
+  "police_reference_points": [
+    {"name": "Pilot police reference - west", "lat": 13.035, "lon": 77.524},
+    {"name": "Pilot police reference - central", "lat": 13.055, "lon": 77.515},
+    {"name": "Pilot police reference - north", "lat": 13.075, "lon": 77.532}
+  ],
+  "generated_fields": [
+    {
+      "field": "district crime marker coordinates",
+      "method": "Deterministically randomized inside the streetlight pilot bounds",
+      "purpose": "Visualization only; not a real district boundary or incident location"
+    },
+    {
+      "field": "crime_rate_pct",
+      "method": "Uploaded district Total cases normalized against the highest Total and scaled to a 1-85 index",
+      "purpose": "Prototype comparison index, not a per-capita crime rate"
+    }
+  ],
+  "prototype_assumptions": [
+    "Police points are reference points, not verified live station locations.",
+    "Police and route ETA values are estimates.",
+    "Missing streetlight proximity is labeled unverified, not proven darkness."
+  ]
+}
