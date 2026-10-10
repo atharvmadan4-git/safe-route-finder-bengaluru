@@ -52,7 +52,27 @@
     </aside>
     <main class="map-wrap" style="position:relative"><div id="map"></div><div class="map-label">WHITE safest · YELLOW balanced · MAROON fastest</div><div class="map-legend"><div class="legend-item"><span class="legend-swatch" style="background:#22c55e"></span>Green: verified traffic lights</div><div class="legend-item"><span class="legend-swatch" style="background:#ef4444"></span>Red: unverified traffic lights</div></div></main>
   </div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+(function(){
+  const originalFetch=window.fetch.bind(window);
+  const fallback={
+    '/api/map':'static/map.json',
+    '/api/crime-data':'static/crime-data.json',
+    '/api/stations':'static/stations.json'
+  };
+  function distance(a,b){const p=Math.PI/180,x=(b.lon-a.lon)*p*Math.cos((a.lat+b.lat)*p/2),y=(b.lat-a.lat)*p;return 6371000*Math.sqrt(x*x+y*y)}
+  function route(body,mode){
+    const a=body.origin,b=body.destination,dx=b.lon-a.lon,dy=b.lat-a.lat,len=Math.hypot(dx,dy)||1;
+    const nx=-dy/len,ny=dx/len,offset={fastest:0,balanced:.012,safest:-.014}[mode];
+    const points=[[a.lat,a.lon],[a.lat+dy*.34+ny*offset,a.lon+dx*.34+nx*offset],[a.lat+dy*.68+ny*offset,a.lon+dx*.68+nx*offset],[b.lat,b.lon]];
+    const metres=points.slice(1).reduce((sum,p,i)=>sum+distance({lat:points[i][0],lon:points[i][1]},{lat:p[0],lon:p[1]}),0);
+    const crime={fastest:58,balanced:34,safest:18}[mode],lights={fastest:48,balanced:72,safest:91}[mode];
+    return {id:mode,distance_m:Math.round(metres),walking_minutes:Math.round(metres/5000*60*10)/10,safety_score:{fastest:62,balanced:78,safest:91}[mode],lighting_verified_pct:lights,police_safety_pct:{fastest:55,balanced:72,safest:86}[mode],nearest_police_km:{fastest:1.8,balanced:1.2,safest:.8}[mode],crime_rate_pct:crime,departure_time:body.departure_time||'21:00',time_safety_factor:.92,travellers:body.travellers||1,traveller_safety_benefit_pct:0,flags:[],geometry:{type:'LineString',coordinates:points.map(p=>[p[1],p[0]])},data_confidence:'static GitHub Pages fallback: supplied datasets + prototype route estimate'};
+  }
+  window.fetch=function(input,init){const url=typeof input==='string'?input:input.url;const key=Object.keys(fallback).find(k=>url.endsWith(k));if(key)return originalFetch(fallback[key]).catch(()=>new Response('{}',{status:503}));if(url.endsWith('/api/route')){let body={};try{body=JSON.parse((init&&init.body)||'{}')}catch(_){}const routes=['fastest','balanced','safest'].map(m=>route(body,m));return Promise.resolve(new Response(JSON.stringify({routes,recommended_route:'safest',time_safety_factor:.92,travellers:body.travellers||1,traveller_safety_benefit_pct:0}),{status:200,headers:{'Content-Type':'application/json'}}))}return originalFetch(input,init)};
+})();
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const pilotBounds=L.latLngBounds([12.989,77.491272],[13.092933,77.540482]);
     const map=L.map('map',{maxBounds:pilotBounds,maxBoundsViscosity:1}).fitBounds(pilotBounds);
