@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SafeRoute — Night Travel Bengaluru Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root{--ink:#0f172a;--paper:#f8fafc;--muted:#94a3b8;--line:#334155;--red:#ef4444;--yellow:#facc15;--green:#22c55e;--blue:#38bdf8}
+    *{box-sizing:border-box}body{margin:0;background:var(--ink);color:var(--paper);font-family:"DM Mono",monospace;overflow:hidden}
+    .app{height:100vh;display:grid;grid-template-columns:35% 65%}.drawer{border-right:1px solid var(--line);padding:26px 28px;overflow:auto;background:#111c30}
+    .eyebrow{font-size:11px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase}.brand{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:18px}
+    h1,h2,h3{font-family:"Playfair Display",serif;margin:0;color:var(--paper)}h1{font-size:clamp(28px,3vw,44px);line-height:.98;max-width:250px}h2{font-size:20px}h3{font-size:17px}
+    .live{font-size:10px;color:var(--green);white-space:nowrap}.live:before{content:"";display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px #22c55e22}
+    .section{padding:19px 0;border-bottom:1px solid #33415599}.section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}.section-note{font-size:10px;color:var(--muted)}
+    label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:12px 0 6px}input{width:100%;border:1px solid var(--line);background:#0b1324;color:var(--paper);padding:11px 12px;font:inherit;font-size:12px;outline:none}input:focus{border-color:var(--blue)}
+    .search-results{border:1px solid var(--line);border-top:0}.search-result{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #334155;background:#162238;color:var(--paper);padding:10px;font:inherit;font-size:11px;cursor:pointer}.search-result:hover{background:#20314d}.search-result small{display:block;color:var(--muted);margin-top:4px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.range-line{display:flex;align-items:center;gap:12px}.range-line input{padding:0;border:0}.range-value{font-size:16px;color:var(--yellow);min-width:25px}
+    .switch{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #33415577;font-size:11px}.switch input{appearance:none;width:34px;height:18px;padding:0;border-radius:20px;background:#334155;position:relative;cursor:pointer}.switch input:after{content:"";position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:var(--paper);transition:.2s}.switch input:checked{background:var(--blue)}.switch input:checked:after{left:19px}
+    button{font:inherit;cursor:pointer}    .primary{width:100%;padding:13px;border:1px solid var(--paper);background:var(--paper);color:var(--ink);font-weight:500;text-transform:uppercase;letter-spacing:.08em}.primary:hover{background:var(--yellow);border-color:var(--yellow)}.secondary{width:100%;padding:10px;border:1px solid var(--blue);background:#10253a;color:var(--paper);font-size:10px;text-transform:uppercase;letter-spacing:.06em}.secondary:hover{background:#16405d}
+    .route-list{display:grid;gap:8px}.route-card{border:1px solid var(--line);padding:13px;background:#0d1729;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}.route-card:hover{transform:translateX(4px);background:#14233b}.route-card.active{border-color:var(--paper)}.route-top{display:flex;justify-content:space-between;align-items:center}.route-name{font-size:12px;font-weight:500;letter-spacing:.08em}.route-score{font-size:18px;color:var(--route-color)}.route-meta{font-size:11px;color:var(--muted);margin-top:8px}.route-bar{height:4px;background:#26354c;margin-top:11px}.route-bar span{display:block;width:var(--score);height:100%;background:var(--route-color);transition:width .6s ease}
+    .flags{color:#fbbf24;font-size:10px;margin-top:8px}.muted{color:var(--muted);font-size:10px;line-height:1.5}.emergency{display:grid;grid-template-columns:1fr 1fr;gap:6px}.emergency a{padding:9px 5px;text-align:center;text-decoration:none;color:var(--paper);font-size:10px;border:1px solid #7f1d1d;background:#451a1a}.emergency a:hover{background:#991b1b}
+    #map{height:100%;background:#111827}.map-label{position:absolute;z-index:500;top:20px;right:25px;background:#0f172add;border:1px solid var(--line);padding:10px 13px;font-size:10px;color:var(--muted)}.map-legend{position:absolute;z-index:500;right:18px;bottom:18px;background:#0f172ae8;border:1px solid var(--line);padding:8px 10px;font-size:9px;color:var(--muted);line-height:1.7}.legend-item{display:flex;align-items:center;gap:7px}.legend-swatch{width:9px;height:9px;display:inline-block;border-radius:50%}.leaflet-container{background:#111827}.leaflet-control-zoom a{background:#0f172a!important;color:var(--paper)!important;border-color:var(--line)!important}
+    .detail{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{border-left:2px solid var(--blue);padding:7px 9px;background:#0c1628}.metric b{display:block;color:var(--paper);font-size:14px;margin-top:4px}.metric span{font-size:9px;color:var(--muted);text-transform:uppercase}
+    @media(max-width:900px){body{overflow:auto}.app{height:auto;min-height:100vh;display:flex;flex-direction:column}.drawer{order:2}.map-wrap{height:56vh;order:1}#map{height:100%}}
+  </style>
+</head>
+<body><div style="position:fixed;z-index:2000;left:10px;bottom:10px;background:#0f172ae8;color:#f8fafc;border:1px solid #334155;padding:7px 9px;font:10px monospace">Static prototype preview · full routing runs with the local Python backend</div>
+  <div class="app">
+    <aside class="drawer">
+      <header class="brand"><div><div class="eyebrow">Bengaluru / night travel</div><h1>SafeRoute</h1></div><div class="live">LIVE MODEL</div></header>
+      <section class="section">
+        <div class="section-head"><h2>Build a route</h2><span class="section-note">safety first</span></div>
+        <label for="origin-search">Origin</label><input id="origin-search" placeholder="Search a named place" autocomplete="off"><div id="origin-results" class="search-results" hidden></div>
+        <label for="destination-search">Destination</label><input id="destination-search" placeholder="Search a named place" autocomplete="off"><div id="destination-results" class="search-results" hidden></div>
+        <div class="grid2"><div><label for="departure-time">Departure</label><input id="departure-time" type="time"></div><div><label for="travellers">Travellers</label><input id="travellers" type="number" min="1" max="20" value="1"></div></div>
+        <button id="go" class="primary" style="margin-top:16px">Calculate routes</button>
+      </section>
+      <section class="section">
+        <div class="section-head"><h2>Safety drill-down</h2><span class="section-note">optional priority</span></div>
+        <div class="switch"><span>Women / solo night travel</span><input id="women-toggle" type="checkbox"></div>
+        <div class="switch"><span>LGBTQ+ safe havens</span><input id="lgbtq-toggle" type="checkbox"></div>
+        <div class="muted" style="margin-top:10px">Priorities are interface controls for the next data layer. Current pilot data does not verify havens or incident records.</div>
+      </section>
+      <section class="section"><div class="section-head"><h2>Route matrix</h2><span class="section-note">red / yellow / green</span></div><div id="results" class="route-list"><div class="muted">Choose two named locations to compare routes.</div></div></section>
+      <section class="section"><div class="section-head"><h2>Selected route</h2><span id="selected-label" class="section-note">none</span></div><div id="detail" class="detail"><div class="metric"><span>Incident density</span><b>Not supplied</b></div><div class="metric"><span>Pedestrian activity</span><b>Not supplied</b></div><div class="metric"><span>Streetlights</span><b>Location data</b></div><div class="metric"><span>Nearest bus stop</span><b>Not supplied</b></div><div class="metric"><span>Police ETA</span><b>Prototype estimate</b></div><div class="metric"><span>Ambulance ETA</span><b>Prototype estimate</b></div></div><div class="muted" style="margin-top:10px">Crime figures are simulated demo estimates until verified incident data is connected.</div></section>
+      <section class="section"><div class="section-head"><h2>Emergency</h2><span class="section-note">tap to call</span></div><button id="nearest-police" class="secondary" style="margin-bottom:10px">Locate nearest police station</button><div id="police-status" class="muted" style="margin-bottom:10px">Uses your location when permitted, otherwise the selected origin.</div><div class="emergency"><a href="tel:112">🚨 112 National</a><a href="tel:100">👮 100 Police</a><a href="tel:181">♀ 181 Women</a><a href="tel:102">🚑 102 Ambulance</a><a href="tel:108">🚑 108 Ambulance</a></div></section>
+      <div class="muted" style="padding-top:16px">Flags are possible concerns, not confirmed incidents. Green means stronger evidence in the current model, not a guarantee of safety. District crime records use deterministic random pilot coordinates for visualization only.</div>
+    </aside>
+    <main class="map-wrap" style="position:relative"><div id="map"></div><div class="map-label">WHITE safest · YELLOW balanced · MAROON fastest</div><div class="map-legend"><div class="legend-item"><span class="legend-swatch" style="background:#22c55e"></span>Green: verified traffic lights</div><div class="legend-item"><span class="legend-swatch" style="background:#ef4444"></span>Red: unverified traffic lights</div></div></main>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const pilotBounds=L.latLngBounds([12.989,77.491272],[13.092933,77.540482]);
+    const map=L.map('map',{maxBounds:pilotBounds,maxBoundsViscosity:1}).fitBounds(pilotBounds);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri, © OpenStreetMap'}).addTo(map);
+    let base=L.layerGroup().addTo(map),routeLayers=[],selectedRoute=null,originPin,destinationPin,policeLayer=L.layerGroup().addTo(map),crimeLayer=L.layerGroup().addTo(map),datasetLayer=L.layerGroup().addTo(map),crimeRecords=[];
+    const timeInput=document.getElementById('departure-time'),clock=document.createElement('span');
+    const locations=[{name:'Pilot centre',description:'Bengaluru streetlight pilot centre',lat:13.055,lon:77.535},{name:'Yeshwanthpur',description:'North-west Bengaluru streetlight corridor',lat:13.028,lon:77.540},{name:'Hebbal pilot edge',description:'North Bengaluru streetlight pilot reference',lat:13.035,lon:77.532},{name:'Peenya pilot edge',description:'North-west Bengaluru streetlight pilot reference',lat:13.030,lon:77.515},{name:'Nagasandra',description:'North Bengaluru streetlight-covered area',lat:13.055,lon:77.499},{name:'Dasarahalli',description:'North-west Bengaluru streetlight-covered area',lat:13.047,lon:77.507},{name:'Chikkabanavara',description:'North Bengaluru streetlight-covered area',lat:13.078,lon:77.512},{name:'Lottegollahalli',description:'North Bengaluru streetlight-covered area',lat:13.058,lon:77.528}];
+    const selected={origin:{lat:13.055,lon:77.535,name:'Pilot centre'},destination:{lat:13.035,lon:77.532,name:'Hebbal pilot edge'}};
+    function setClock(){if(!timeInput.value){const n=new Date();timeInput.value=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`}}setClock();
+    fetch('/api/map').then(r=>r.json()).then(g=>{
+      const red={...g,features:g.features.filter(f=>f.properties.lighting_status!=='verified')};
+      const green={...g,features:g.features.filter(f=>f.properties.lighting_status==='verified')};
+      const addPatches=(collection,color)=>{
+        collection.features.forEach(f=>{
+          const points=f.geometry.coordinates;
+          const mid=[(points[0][1]+points[1][1])/2,(points[0][0]+points[1][0])/2];
+          L.circle(mid,{radius:42,color,weight:1,opacity:.3,fillColor:color,fillOpacity:.5}).addTo(base);
+        });
+      };
+      addPatches(red,'#ef4444');
+      addPatches(green,'#22c55e');
+      L.geoJSON(red,{style:{color:'#ef4444',weight:2,opacity:.3}}).addTo(base);
+      L.geoJSON(green,{style:{color:'#22c55e',weight:3,opacity:.65}}).addTo(base);
+      map.fitBounds(pilotBounds);
+    });
+    fetch('/api/crime-data').then(r=>r.json()).then(d=>{
+      crimeRecords=d.records;
+      const maxCases=Math.max(...d.records.map(x=>x.total_cases),1);
+      d.records.forEach(x=>{
+        const intensity=x.total_cases/maxCases;
+        const color=intensity>.65?'#ef4444':intensity>.35?'#facc15':'#22c55e';
+        L.circleMarker([x.lat,x.lon],{radius:6+intensity*8,color:'#0f172a',weight:2,fillColor:color,fillOpacity:.85})
+          .bindPopup(`<b>${x.district}</b><br>IPC cases: ${x.ipc_cases.toLocaleString()}<br>SLL cases: ${x.sll_cases.toLocaleString()}<br>Total cases: ${x.total_cases.toLocaleString()}<br><small>Source coordinates randomly placed within the streetlight pilot bounds.</small>`)
+          .addTo(datasetLayer);
+      });
+    });
+    function updatePin(kind){const point=selected[kind],old=kind==='origin'?originPin:destinationPin;if(old)old.remove();const color=kind==='origin'?'#38bdf8':'#f97316';const pin=L.circleMarker([point.lat,point.lon],{radius:9,weight:3,color:'#0f172a',fillColor:color,fillOpacity:1}).addTo(map);pin.bindTooltip(kind==='origin'?'ORIGIN':'DESTINATION',{direction:'top',offset:[0,-8],className:'pin-label'});if(kind==='origin')originPin=pin;else destinationPin=pin}
+    function search(kind){const q=document.getElementById(`${kind}-search`).value.toLowerCase().trim(),box=document.getElementById(`${kind}-results`),matches=locations.filter(x=>`${x.name} ${x.description}`.toLowerCase().includes(q));box.innerHTML=matches.map((x,i)=>`<button class="search-result" data-i="${i}">${x.name}<small>${x.description}</small></button>`).join('');box.hidden=!matches.length;box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const x=matches[+b.dataset.i];selected[kind]={lat:x.lat,lon:x.lon,name:x.name};document.getElementById(`${kind}-search`).value=x.name;box.hidden=true;updatePin(kind);map.setView([x.lat,x.lon],15)})}
+    function nearestPolice(point){return fetch('/api/stations').then(r=>r.json()).then(d=>{const stations=d.stations.map(s=>({...s,distance:haversine(point.lat,point.lon,s.lat,s.lon)}));return stations.sort((a,b)=>a.distance-b.distance)[0]})}
+    function haversine(lat1,lon1,lat2,lon2){const r=6371,a=Math.sin((lat2-lat1)*Math.PI/360)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin((lon2-lon1)*Math.PI/360)**2;return 2*r*Math.asin(Math.sqrt(a))}
+    document.getElementById('nearest-police').onclick=()=>{const status=document.getElementById('police-status');status.textContent='Locating nearest station…';const usePoint=p=>nearestPolice(p).then(s=>{policeLayer.clearLayers();const marker=L.marker([s.lat,s.lon]).bindPopup(`<b>${s.name}</b><br>${s.distance.toFixed(2)} km from selected point`).openPopup().addTo(policeLayer);map.setView([s.lat,s.lon],15);status.textContent=`${s.name} · ${s.distance.toFixed(2)} km from selected origin`});if(!navigator.geolocation)return usePoint(selected.origin);navigator.geolocation.getCurrentPosition(p=>usePoint({lat:p.coords.latitude,lon:p.coords.longitude}),()=>usePoint(selected.origin),{enableHighAccuracy:true,timeout:5000})};
+    ['origin','destination'].forEach(k=>{const el=document.getElementById(`${k}-search`);el.oninput=()=>search(k);el.onfocus=()=>search(k)});
+    function routeColor(id){return id==='fastest'?'#7f1d1d':id==='balanced'?'#facc15':'#f8fafc'}
+    function crimeRecordAt(lat,lon){return crimeRecords.reduce((nearest,record)=>{const distance=haversine(lat,lon,record.lat,record.lon);return !nearest||distance<nearest.distance?{record,distance}:nearest},null)}
+    function crimeRate(lat,lon){const nearest=crimeRecordAt(lat,lon);return nearest?Math.max(1,Math.round(nearest.record.total_cases/Math.max(...crimeRecords.map(x=>x.total_cases))*85*10)/10):1}
+    function crimeTone(rate){return rate>=60?'#ef4444':rate>=30?'#facc15':'#22c55e'}
+    function activateRoute(id){routeLayers.forEach(item=>{const active=item.route.id===id;item.layer.setStyle({color:routeColor(item.route.id),weight:active?5:2,opacity:active?1:.22});});const active=routeLayers.find(item=>item.route.id===id);if(active)active.layer.bringToFront()}
+    function showDetail(r){selectedRoute=r;document.getElementById('selected-label').textContent=r.id.toUpperCase();document.getElementById('detail').innerHTML=`<div class="metric"><span>Average crime rate on route</span><b>${r.crime_rate_pct}%</b></div><div class="metric"><span>Lighting coverage</span><b>${r.lighting_verified_pct}%</b></div><div class="metric"><span>Police proximity</span><b>${r.police_safety_pct}%</b></div><div class="metric"><span>Nearest police</span><b>${r.nearest_police_km} km</b></div><div class="metric"><span>Police ETA</span><b>${r.nearest_police_km<1?'4–7':'8–15'} min*</b></div><div class="metric"><span>Ambulance ETA</span><b>Prototype*</b></div>`}
+    map.on('click',event=>{const nearest=crimeRecordAt(event.latlng.lat,event.latlng.lng),rate=crimeRate(event.latlng.lat,event.latlng.lng),tone=crimeTone(rate);crimeLayer.clearLayers();L.circleMarker(event.latlng,{radius:10,color:'#0f172a',weight:3,fillColor:tone,fillOpacity:1}).addTo(crimeLayer);const routeText=selectedRoute?`<br>Average crime rate of the route passing by: <b>${selectedRoute.crime_rate_pct}%</b>`:'<br>Calculate a route to see its average crime rate.';const sourceText=nearest?`<br><small>Nearest district record: ${nearest.record.district} · ${nearest.record.total_cases.toLocaleString()} total cases</small>`:'';L.popup().setLatLng(event.latlng).setContent(`<b>Area crime rate index: ${rate}%</b>${sourceText}${routeText}`).openOn(map)});
+    updatePin('origin');updatePin('destination');
+    document.getElementById('go').onclick=async()=>{const body={origin:{lat:selected.origin.lat,lon:selected.origin.lon},destination:{lat:selected.destination.lat,lon:selected.destination.lon},departure_time:timeInput.value,travellers:+document.getElementById('travellers').value};const box=document.getElementById('results');routeLayers.forEach(x=>x.layer.remove());routeLayers=[];box.innerHTML='<div class="muted">Calculating safety matrix…</div>';try{const r=await fetch('/api/route',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),d=await r.json();if(!r.ok)throw Error(d.error);box.innerHTML=d.routes.map(x=>`<article class="route-card" data-route="${x.id}" style="--route-color:${routeColor(x.id)};--score:${x.safety_score}%"><div class="route-top"><span class="route-name">${x.id.toUpperCase()} ${x.id===d.recommended_route?'★':''}</span><span class="route-score">${x.safety_score}</span></div><div class="route-meta">${x.distance_m} m · ${x.walking_minutes} min · lights ${x.lighting_verified_pct}% · police ${x.police_safety_pct}% · crime avg ${x.crime_rate_pct}%</div><div class="route-bar"><span></span></div>${x.flags.length?`<div class="flags">⚠ ${x.flags.map(f=>f.title).join(' · ')}</div>`:''}</article>`).join('');d.routes.forEach(x=>{const line=L.geoJSON(x.geometry,{style:{color:'#f8fafc',weight:4,opacity:.25,dashArray:'10 8',lineCap:'butt'}}).addTo(map);line.on('click',()=>{activateRoute(x.id);showDetail(x)});routeLayers.push({layer:line,route:x})});box.querySelectorAll('[data-route]').forEach(card=>card.onclick=()=>{const x=d.routes.find(r=>r.id===card.dataset.route);box.querySelectorAll('.route-card').forEach(c=>c.classList.remove('active'));card.classList.add('active');activateRoute(x.id);showDetail(x)});const recommended=d.routes.find(x=>x.id===d.recommended_route)||d.routes[0];activateRoute(recommended.id);showDetail(recommended)}catch(e){box.innerHTML=`<div class="muted" style="color:#f87171">${e.message}</div>`}};
+  </script>
+</body>
+</html>
